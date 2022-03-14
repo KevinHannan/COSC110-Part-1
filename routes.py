@@ -56,7 +56,7 @@ def strip_spaces(list):
     return routeDataList
 
 #This Function Will Remove Every Duplicate After The First Key Found Within The Provided Dictionary - Note May Cause Inconsistency If Not Known
-def strip_duplicate_keys(output):
+def strip_duplicate_keys(output, obj):
     rList = []
     dups = []
     for i in range(0, len(output)):
@@ -64,20 +64,23 @@ def strip_duplicate_keys(output):
             if key == 'route_number':
                 try:
                     rList.index(value)
-                    dups.append("route_number: {}, happy_ratio: {}".format(value, output[i].get('happy_ratio')))
+                    dups.append("{},{}".format(value, output[i].get('happy_ratio')))
                 except:
                     rList.append(value)
 
     for i in range(0, len(rList)):
         rList[i] = rList[i] + "," + output[i].get('happy_ratio')   
     
-    print("WARN - Please Note We Have Removed The Following Duplicate Entries From The Provided Data - If This Is An Issue Please Ammend The Text File And Restart The Application")
-    for i in dups:
-        print(i)
+    if len(dups) > 0:
+        print("\nWARN - Please Note We Have Removed The Following Duplicate Entries From The Provided Data - If This Is An Issue Please Ammend The Text File And Restart The Application")
+        for i in dups:
+            print(i)
+            print("Line #" + locate_line(obj) + ": " + i)
+        print()
 
     return rList
 
-def strip_empty_keys(output):
+def strip_empty_keys(output, obj):
     delete = []
     empty = []
 
@@ -88,17 +91,21 @@ def strip_empty_keys(output):
                 found = True
                 delete.append(i)
         if found == True:
-            empty.append("route_number: {}, happy_ratio: {}".format(value, output[i].get('happy_ratio')))
+            empty.append("{},{}".format(output[i].get('route_number'), output[i].get('happy_ratio')))
         
     removed = 0
     for i in delete:
         del output[i-removed]
         removed += 1     
 
-    print("WARN - Please Note We Have Removed The Following Duplicate Entries From The Provided Data - If This Is An Issue Please Ammend The Text File And Restart The Application")
-    for i in empty:
-        print(i)
-                   
+    exclude = []
+    if len(empty) > 0:
+        print("\nWARN - Please Note We Have Removed The Following Empty Entries From The Provided Data - If This Is An Issue Please Ammend The Text File And Restart The Application")
+        for i in empty:
+            index = locate_line(i, obj, exclude)
+            print("Line #" + index + ": " + i)
+            exclude.append(index)
+          
     return output
 
 
@@ -123,11 +130,31 @@ def read_route_data(obj):
         lines = reader.readlines()
         routedataList = create_dictionary(strip_spaces(lines))
         #test_print_data(routedataList, "Spaces")
-        routedataList = strip_empty_keys(routedataList)
+        routedataList = create_dictionary(strip_empty_keys(routedataList, obj))
         #test_print_data(routedataList, "Empty")
-        routedataList = create_dictionary(strip_duplicate_keys(routedataList))
+        routedataList = create_dictionary(strip_duplicate_keys(routedataList, obj))
         #test_print_data(routedataList, "Duplicate")
         obj.set_data(sort_route_data(routedataList))
+
+def locate_line(line, obj, exclude):
+    with open(obj.get_dir(), 'r') as reader:
+        lines = reader.readlines()
+
+        for i in range(0, len(lines)):
+            lines[i] = lines[i].strip()
+
+        index = str(lines.index(line))
+        
+        try: 
+            print(index)
+            exclude.index(index)
+            print("found")
+        except:
+            index = lines.index(line)
+            print("not found")
+
+        return str(index)
+        
 
 def detect_data_errors(data):
     def errors_(data):
