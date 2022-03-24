@@ -145,13 +145,14 @@ def locate_line(line, obj, exclude):
 
         index = str(lines.index(line))
         
-        try: 
-            print(index)
-            exclude.index(index)
-            print("found")
-        except:
-            index = lines.index(line)
-            print("not found")
+        def asd():
+            try: 
+                exclude.index(index)
+            except:
+                index = lines.index(line)
+                print("not found")
+
+        asd()
 
         return str(index)
         
